@@ -9,7 +9,7 @@ description = "Extraction, spectral analysis and visualization of transformer at
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [{ name = "Tu Nombre", email = "tu@email.com" }]
+authors = [{ name = "Carolina Gutiérrez Soria"}]
 
 dependencies = [
     "torch>=2.1",
@@ -26,9 +26,6 @@ dev = [
     "ruff",
 ]
 all = ["attnspectra[hf,dev]"]
-
-[project.scripts]
-attnspectra = "attnspectra.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

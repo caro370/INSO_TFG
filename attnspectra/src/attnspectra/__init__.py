@@ -62,7 +62,7 @@ __all__ = [
     "stack_metric", "mean_over_texts", "top_sensitive_heads",
     "normalize_attn", "attention_entropy", "attention_distance",
     "singular_values", "effective_rank", "top_singular_value", "spectral_decay_rate",
-    "anisotropy_index", "gini_coefficient", "effective_rank_threshold",
+    "anisotropy_index", "gini_coefficient",
     "shuffle_content", "replace_fraction", "random_iid",
     "make_variants", "trim_keep_prefix",
     "plot_attention_matrix", "plot_attention_matrix_interactive", "heatmap_delta", "heatmap_metric",
