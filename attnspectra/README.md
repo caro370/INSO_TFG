@@ -62,35 +62,34 @@ fig = aspec.plot_attention_matrix(A, tokens)
 ## Ejemplo con Hugging Face
 
 ```python
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 import attnspectra as aspec
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# Cargar modelo pequeño
 model_name = "gpt2"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    attn_implementation="eager",
+)
 
-# Crear adapter
-adapter = aspec.HFTransformerAdapter(model, tokenizer)
+adapter = aspec.HFTransformerAdapter(
+    model=model,
+    tokenizer=tokenizer,
+    architecture="decoder",
+)
 
-# Preparar input
-text = "The quick brown fox jumps over the lazy dog"
+text = "The quick brown fox jumps over the lazy dog."
 inputs = tokenizer(text, return_tensors="pt")
 
-# Capturar atención + métricas
 run, metrics = aspec.capture_and_compute(
     adapter,
     inputs["input_ids"],
 )
 
-# Ver métricas
 print(metrics.A_attn_entropy.shape)
 
-# Visualizar una cabeza
 A, tokens = aspec.get_content_attention(run, layer=0, head=0)
 fig = aspec.plot_attention_matrix(A, tokens)
-
 ```
 ---
 
