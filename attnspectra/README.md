@@ -24,6 +24,7 @@ pip install attnspectra[all]
 
 # Dependencias de desarrollo
 pip install attnspectra[dev]
+```
 ---
 
 ## Uso rápido
@@ -56,6 +57,7 @@ print(metrics.A_attn_distance)
 A, tokens = aspec.get_content_attention(run, layer=0, head=0)
 fig = aspec.plot_attention_matrix(A, tokens)
 ```
+--- 
 
 ## Ejemplo con Hugging Face
 
