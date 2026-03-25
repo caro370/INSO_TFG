@@ -3,7 +3,7 @@ Extracción, análisis espectral y visualización de matrices de atención
 de modelos transformer.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from attnspectra.core.types import CapturedRun, HeadMetrics, ModelInfo
 from attnspectra.config.capture import CaptureConfig, TargetSpec
