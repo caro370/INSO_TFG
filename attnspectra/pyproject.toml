@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attnspectra"
-version = "0.1.0"
+version = "0.1.1"
 description = "Extraction, spectral analysis and visualization of transformer attention matrices"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [{ name = "Carolina Gutiérrez Soria"}]
+authors = [{ name = "Carolina Gutiérrez Soria" }]
 
 dependencies = [
     "torch>=2.1",
@@ -19,13 +19,30 @@ dependencies = [
 
 [project.optional-dependencies]
 hf = ["transformers>=4.38"]
+viz = [
+    "plotly>=5.0",
+    "ipywidgets>=8.0",
+    "ipython>=8.0",
+]
 dev = [
     "pytest>=7",
     "pytest-cov",
     "mypy",
     "ruff",
 ]
-all = ["attnspectra[hf,dev]"]
+all = [
+    "transformers>=4.38",
+    "plotly>=5.0",
+    "ipywidgets>=8.0",
+    "ipython>=8.0",
+    "pytest>=7",
+    "pytest-cov",
+    "mypy",
+    "ruff",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

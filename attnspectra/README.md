@@ -16,10 +16,14 @@ Extras opcionales:
 # Soporte para modelos Hugging Face
 pip install attnspectra[hf]
 
+# Visualización interactiva (Plotly + widgets)
+pip install attnspectra[viz]
+
+# Todo incluido
+pip install attnspectra[all]
+
 # Dependencias de desarrollo
 pip install attnspectra[dev]
-```
-
 ---
 
 ## Uso rápido
@@ -53,6 +57,10 @@ A, tokens = aspec.get_content_attention(run, layer=0, head=0)
 fig = aspec.plot_attention_matrix(A, tokens)
 ```
 
+```md
+> Nota: las visualizaciones interactivas requieren dependencias opcionales.
+> Instálalas con:
+> `pip install attnspectra[viz]`
 ---
 
 ## Qué puedes hacer con attnspectra
@@ -69,7 +77,7 @@ fig = aspec.plot_attention_matrix(A, tokens)
 * **Captura de atención** mediante adapters flexibles
 * **14 métricas** (entropía, rango efectivo, espectro, anisotropía, etc.)
 * **Análisis por capa y cabeza**
-* **Visualizaciones** listas para usar con matplotlib
+* **Visualizaciones** con matplotlib y modo interactivo con Plotly (opcional)
 * **Experimentos automatizados** (degradación, comparación de estilos)
 
 ---

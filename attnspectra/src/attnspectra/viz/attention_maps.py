@@ -1,37 +1,47 @@
 """
 Visualización de matrices de atención individuales.
 
-Funcines:
+Funciones:
   plot_attention_matrix             — heatmap de una cabeza
   plot_attention_matrix_interactive — heatmap con sliders de capa y cabeza
 """
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Any, Sequence
 
-from attnspectra.core.types import CapturedRun
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly
 import torch
+from IPython.display import display
 
+from attnspectra.core.types import CapturedRun
 from attnspectra.viz.tokens import format_token_labels
 
+
 def plot_attention_matrix_interactive(
-    run: "CapturedRun",
+    run: CapturedRun,
     max_tokens: int = 50,
     title: str = "Attention Matrix",
     colorscale: str = "Viridis",
     width: int = 750,
     height: int = 650,
-) -> "plotly.graph_objects.Figure":
+) -> Any:
+    """
+    Visualización interactiva de una matriz de atención con sliders
+    para seleccionar capa y cabeza.
+
+    Requiere dependencias opcionales:
+        pip install attnspectra[viz]
+    """
     try:
         import plotly.graph_objects as go
         import ipywidgets as widgets
-        from IPython.display import display
-    except ImportError:
-        raise ImportError("Requiere plotly e ipywidgets")
+    except ImportError as e:
+        raise ImportError(
+            "plot_attention_matrix_interactive requiere dependencias opcionales. "
+            "Instálalas con: pip install attnspectra[viz]"
+        ) from e
 
     available_layers = [li for li, A in enumerate(run.attentions) if A is not None]
     if not available_layers:
@@ -44,23 +54,29 @@ def plot_attention_matrix_interactive(
     def get_matrix(layer_idx: int, head_idx: int) -> np.ndarray:
         return run.attentions[layer_idx][0, head_idx, :T, :T].float().cpu().numpy()
 
-    # Una sola traza con la matriz inicial
-    mat = get_matrix(available_layers[0], 0)
-    fig = go.FigureWidget(go.Heatmap(
-        z=mat,
-        x=tokens,
-        y=tokens,
-        colorscale=colorscale,
-        zmin=0,
-        zmax=1.0,
-        colorbar=dict(title="Atención", thickness=14),
-        hovertemplate="Q: %{y}  →  K: %{x}<br>Atención: %{z:.4f}<extra></extra>",
-    ))
+    initial_layer = available_layers[0]
+    initial_head = 0
+    mat = get_matrix(initial_layer, initial_head)
+
+    fig = go.FigureWidget(
+        go.Heatmap(
+            z=mat,
+            x=tokens,
+            y=tokens,
+            colorscale=colorscale,
+            zmin=0,
+            zmax=1.0,
+            colorbar=dict(title="Atención", thickness=14),
+            hovertemplate="Q: %{y} → K: %{x}<br>Atención: %{z:.4f}<extra></extra>",
+        )
+    )
 
     fig.update_layout(
-        title=dict(text=f"{title} — Capa {available_layers[0]} · Cabeza 0", font=dict(size=13)),
+        title=dict(
+            text=f"{title} — Capa {initial_layer} · Cabeza {initial_head}",
+            font=dict(size=13),
+        ),
         xaxis=dict(title="Keys (K)", tickangle=-60, tickfont=dict(size=9)),
-        # scaleanchor garantiza matriz cuadrada
         yaxis=dict(
             title="Queries (Q)",
             tickfont=dict(size=9),
@@ -74,9 +90,8 @@ def plot_attention_matrix_interactive(
         plot_bgcolor="white",
     )
 
-    # Sliders independientes con ipywidgets — sin solapamiento posible
     layer_slider = widgets.IntSlider(
-        value=available_layers[0],
+        value=initial_layer,
         min=available_layers[0],
         max=available_layers[-1],
         step=1,
@@ -85,7 +100,7 @@ def plot_attention_matrix_interactive(
         layout=widgets.Layout(width="400px"),
     )
     head_slider = widgets.IntSlider(
-        value=0,
+        value=initial_head,
         min=0,
         max=n_heads - 1,
         step=1,
@@ -94,7 +109,7 @@ def plot_attention_matrix_interactive(
         layout=widgets.Layout(width="400px"),
     )
 
-    def on_change(change):
+    def on_change(change: object) -> None:
         li = layer_slider.value
         h = head_slider.value
         new_mat = get_matrix(li, h)
@@ -107,7 +122,8 @@ def plot_attention_matrix_interactive(
     head_slider.observe(on_change, names="value")
 
     display(widgets.VBox([layer_slider, head_slider, fig]))
-    return None
+    return fig
+
 
 def plot_attention_matrix(
     A: torch.Tensor | np.ndarray,
