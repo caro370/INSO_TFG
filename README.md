@@ -147,7 +147,6 @@ pytest tests/ -v
 
 | Documento | Contenido |
 |-----------|-----------|
-| `docs/quickstart.md` | Tutorial de inicio en 5 pasos con ejemplos completos |
 | `docs/concepts/metrics.md` | Definición matemática e interpretación de las 14 métricas |
 | `docs/concepts/capture.md` | Arquitectura del pipeline de captura y shapes canónicos |
 | `docs/concepts/viz.md` | Referencia completa de las 6 funciones de visualización |
