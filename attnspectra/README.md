@@ -57,10 +57,38 @@ A, tokens = aspec.get_content_attention(run, layer=0, head=0)
 fig = aspec.plot_attention_matrix(A, tokens)
 ```
 
-```md
-> Nota: las visualizaciones interactivas requieren dependencias opcionales.
-> Instálalas con:
-> `pip install attnspectra[viz]`
+## Ejemplo con Hugging Face
+
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import attnspectra as aspec
+
+# Cargar modelo pequeño
+model_name = "gpt2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+
+# Crear adapter
+adapter = aspec.HFTransformerAdapter(model, tokenizer)
+
+# Preparar input
+text = "The quick brown fox jumps over the lazy dog"
+inputs = tokenizer(text, return_tensors="pt")
+
+# Capturar atención + métricas
+run, metrics = aspec.capture_and_compute(
+    adapter,
+    inputs["input_ids"],
+)
+
+# Ver métricas
+print(metrics.A_attn_entropy.shape)
+
+# Visualizar una cabeza
+A, tokens = aspec.get_content_attention(run, layer=0, head=0)
+fig = aspec.plot_attention_matrix(A, tokens)
+
 ```
 ---
 

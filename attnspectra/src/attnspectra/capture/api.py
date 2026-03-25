@@ -6,7 +6,7 @@ En lugar de encadenar manualmente adapter → capture → compute_head_metrics,
 estas funciones hacen todo el pipeline en una sola llamada, lo que simplifica
 el código de los notebooks y scripts de experimentos.
 
-Los parámetros de ``MetricConfig`` (``eps``, ``er_threshold``, ``causal``)
+Los parámetros de ``MetricConfig`` (``eps``, ``causal``)
 se propagan automáticamente a ``compute_head_metrics`` en todas las funciones.
 
 Funciones principales
@@ -49,7 +49,6 @@ def capture_and_compute(
         metrics = compute_head_metrics(
                       run,
                       eps=metric_cfg.eps,
-                      er_threshold=metric_cfg.er_threshold,
                       causal=metric_cfg.causal,
                   )
 
@@ -86,7 +85,6 @@ def capture_and_compute(
     metrics = compute_head_metrics(
         run,
         eps=metric_cfg.eps,
-        er_threshold=metric_cfg.er_threshold,
         causal=metric_cfg.causal,
     )
 
