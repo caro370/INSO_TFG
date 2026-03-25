@@ -61,6 +61,7 @@ fig = aspec.plot_attention_matrix(A, tokens)
 > Nota: las visualizaciones interactivas requieren dependencias opcionales.
 > Instálalas con:
 > `pip install attnspectra[viz]`
+```
 ---
 
 ## Qué puedes hacer con attnspectra
