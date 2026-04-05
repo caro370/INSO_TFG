@@ -187,6 +187,7 @@ experiments/checkpoints/
 *.pt
 *.pth
 *.ckpt
+experiments/notebooks/mix_texts.txt
 
 # Datos grandes o locales
 experiments/data/
