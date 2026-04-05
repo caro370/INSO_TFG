@@ -53,7 +53,7 @@ def save_run(run: CapturedRun, path: str | Path) -> None:
     for i, A in enumerate(run.attentions):
         if A is not None:
             key = f"attentions_L{i:03d}"
-            arrays[key] = A.numpy() if isinstance(A, torch.Tensor) else A
+            arrays[key] = A.cpu().numpy() if isinstance(A, torch.Tensor) else A
 
     meta = {
         "schema_version": SCHEMA_VERSION,

@@ -18,7 +18,6 @@ _ALL_A_METRICS: frozenset[str] = frozenset({
     "A_spectral_decay_rate",
     "A_anisotropy_index",
     "A_gini",
-    "A_effective_rank_thr",
     "A_attn_distance",
 })
 
@@ -33,7 +32,6 @@ _ALL_SC_METRICS: frozenset[str] = frozenset({
     "Sc_spectral_decay_rate",
     "Sc_anisotropy_index",
     "Sc_gini",
-    "Sc_effective_rank_thr",
 })
 
 ALL_METRICS: frozenset[str] = _ALL_A_METRICS | _ALL_S_METRICS | _ALL_SC_METRICS
@@ -71,10 +69,6 @@ class MetricConfig:
     normalize_before_svd:
         Si True (por defecto), normaliza A por filas antes de calcular
         la SVD. Desactivar solo si A ya está normalizada externamente.
-    er_threshold:
-        Umbral relativo para ``A_effective_rank_thr``: se cuentan los
-        valores singulares que superan ``er_threshold · σ₁``.
-        Por defecto 0.01 (1% de σ₁). Valores típicos: 0.01, 0.05, 0.1.
     causal:
         Si True (por defecto), ``A_attn_distance`` solo considera la
         parte triangular inferior (j ≤ i), adecuado para modelos
@@ -86,7 +80,6 @@ class MetricConfig:
     compute_S_metrics:    bool  = True
     eps:                  float = 1e-12
     normalize_before_svd: bool  = True
-    er_threshold:         float = 0.01
     causal:               bool  = True
 
     def active_metrics(self) -> frozenset[str]:
@@ -117,9 +110,4 @@ class MetricConfig:
         if self.eps <= 0:
             raise ValueError(
                 f"MetricConfig.eps debe ser > 0, recibido: {self.eps}"
-            )
-        if not (0.0 < self.er_threshold < 1.0):
-            raise ValueError(
-                f"MetricConfig.er_threshold debe estar en (0, 1), "
-                f"recibido: {self.er_threshold}"
             )

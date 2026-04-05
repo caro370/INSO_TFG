@@ -101,36 +101,36 @@ def compute_head_metrics(
         A  = normalize_attn(A_raw)       # (B, H, Q, K) — filas suman 1
         sv = singular_values(A)          # (B, H, min(Q,K))
 
-        A_ae[li, :]  = attention_entropy(A)[0].detach().numpy()
-        A_er[li, :]  = effective_rank(sv)[0].detach().numpy()
-        A_top[li, :] = top_singular_value(sv)[0].detach().numpy()
-        A_ai[li, :]  = anisotropy_index(sv, eps=eps)[0].detach().numpy()
-        A_gini[li, :] = gini_coefficient(sv, eps=eps)[0].detach().numpy()
-        A_dist[li, :] = attention_distance(A, causal=causal)[0].detach().numpy()
+        A_ae[li, :]  = attention_entropy(A)[0].detach().cpu().numpy()
+        A_er[li, :]  = effective_rank(sv)[0].detach().cpu().numpy()
+        A_top[li, :] = top_singular_value(sv)[0].detach().cpu().numpy()
+        A_ai[li, :]  = anisotropy_index(sv, eps=eps)[0].detach().cpu().numpy()
+        A_gini[li, :] = gini_coefficient(sv, eps=eps)[0].detach().cpu().numpy()
+        A_dist[li, :] = attention_distance(A, causal=causal)[0].detach().cpu().numpy()
 
         try:
-            A_sdr[li, :] = spectral_decay_rate(sv, eps=eps)[0].detach().numpy()
+            A_sdr[li, :] = spectral_decay_rate(sv, eps=eps)[0].detach().cpu().numpy()
         except Exception:
             pass  # lstsq puede fallar con sv degenerados
 
         # Familia S
         S    = torch.log(A.clamp_min(eps))   # (B, H, Q, K) — valores ≤ 0
         sv_s = singular_values(S)
-        S_er[li, :]  = effective_rank(sv_s)[0].detach().numpy()
-        S_top[li, :] = top_singular_value(sv_s)[0].detach().numpy()
+        S_er[li, :]  = effective_rank(sv_s)[0].detach().cpu().numpy()
+        S_top[li, :] = top_singular_value(sv_s)[0].detach().cpu().numpy()
 
         # Familia Sc: solo si se capturaron los scores
         if has_scores and run.scores[li] is not None:
             Sc = run.scores[li].float()          # (B, H, Q, K) — logits reales
             sv_sc = singular_values(Sc)          # (B, H, min(Q,K))
 
-            Sc_er[li, :]  = effective_rank(sv_sc)[0].detach().numpy()
-            Sc_top[li, :] = top_singular_value(sv_sc)[0].detach().numpy()
-            Sc_ai[li, :]  = anisotropy_index(sv_sc, eps=eps)[0].detach().numpy()
-            Sc_gin[li, :] = gini_coefficient(sv_sc, eps=eps)[0].detach().numpy()
+            Sc_er[li, :]  = effective_rank(sv_sc)[0].detach().cpu().numpy()
+            Sc_top[li, :] = top_singular_value(sv_sc)[0].detach().cpu().numpy()
+            Sc_ai[li, :]  = anisotropy_index(sv_sc, eps=eps)[0].detach().cpu().numpy()
+            Sc_gin[li, :] = gini_coefficient(sv_sc, eps=eps)[0].detach().cpu().numpy()
             
             try:
-                Sc_sdr[li, :] = spectral_decay_rate(sv_sc, eps=eps)[0].detach().numpy()
+                Sc_sdr[li, :] = spectral_decay_rate(sv_sc, eps=eps)[0].detach().cpu().numpy()
             except Exception:
                 pass
 

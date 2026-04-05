@@ -41,8 +41,8 @@ def build_rope_cache(
     inv_freq = 1.0 / (base ** (torch.arange(0, half, device=device).float() / half))
     t = torch.arange(seq_len, device=device).float()
     freqs = torch.einsum("i,j->ij", t, inv_freq)
-    cos = freqs.cos()[None, None, :, :]  # (1, 1, T, half)
-    sin = freqs.sin()[None, None, :, :]  # (1, 1, T, half)
+    cos = freqs.cos()[None, None, :, :]  # (1,1,T,half)
+    sin = freqs.sin()[None, None, :, :]  # (1,1,T,half)
     return cos, sin
 
 
@@ -63,11 +63,11 @@ def apply_rope(
     B, H, T, D = x.shape
     half = D // 2
     x1 = x[..., :half]
-    x2 = x[..., half : half * 2]
+    x2 = x[..., half:half*2]
     out1 = x1 * cos - x2 * sin
     out2 = x1 * sin + x2 * cos
-    if D > 2 * half:
-        rest = x[..., 2 * half :]
+    if D > 2*half:
+        rest = x[..., 2*half:]
         return torch.cat([out1, out2, rest], dim=-1)
     return torch.cat([out1, out2], dim=-1)
 
@@ -103,27 +103,24 @@ class CausalSelfAttention(nn.Module):
         assert d_model % n_heads == 0
         self.n_heads = n_heads
         self.head_dim = d_model // n_heads
-        self.dropout_p = dropout
 
         self.qkv = nn.Linear(d_model, 3 * d_model)
         self.proj = nn.Linear(d_model, d_model)
         self.attn_dropout = nn.Dropout(dropout)
+        self.dropout_p = dropout
 
         self.max_seq_len = max_seq_len
         self.rope_base = rope_base
 
-        cos, sin = build_rope_cache(
-            max_seq_len, self.head_dim, device=torch.device("cpu"), base=rope_base
-        )
+        cos, sin = build_rope_cache(max_seq_len, self.head_dim, device=torch.device("cpu"), base=rope_base)
         self.register_buffer("rope_cos", cos, persistent=False)
         self.register_buffer("rope_sin", sin, persistent=False)
 
-        causal = torch.triu(
-            torch.ones(max_seq_len, max_seq_len, dtype=torch.bool), diagonal=1
-        )
+        causal = torch.triu(torch.ones(max_seq_len, max_seq_len, dtype=torch.bool), diagonal=1)
         self.register_buffer("causal_mask", causal, persistent=False)
 
-    def _ensure_device(self, x: torch.Tensor) -> None:
+
+    def _ensure_device(self, x):
         if self.rope_cos.device != x.device:
             self.rope_cos = self.rope_cos.to(x.device)
             self.rope_sin = self.rope_sin.to(x.device)
@@ -136,7 +133,7 @@ class CausalSelfAttention(nn.Module):
         capture: dict[str, bool] | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         B, T, C = x.shape
-        assert T <= self.max_seq_len
+        assert T <= self.max_seq_len, "T supera max_seq_len del attention"
 
         self._ensure_device(x)
 
@@ -156,11 +153,7 @@ class CausalSelfAttention(nn.Module):
         scores = scores.masked_fill(self.causal_mask[:T, :T], float("-inf"))
 
         attn_pre = torch.softmax(scores, dim=-1)
-        attn_post = (
-            self.attn_dropout(attn_pre)
-            if (self.training and self.dropout_p > 0)
-            else attn_pre
-        )
+        attn_post = self.attn_dropout(attn_pre) if (self.training and self.dropout_p > 0) else attn_pre
 
         out = attn_post @ v
         out = out.transpose(1, 2).contiguous().view(B, T, C)
@@ -169,18 +162,17 @@ class CausalSelfAttention(nn.Module):
         if not capture:
             return out, None
 
-        cache: dict[str, torch.Tensor] = {}
-        if capture.get("scores"):
+        cache = {}
+        if capture.get("scores", False):
             cache["scores"] = scores
-        if capture.get("attn_pre"):
+        if capture.get("attn_pre", False):
             cache["attn_pre"] = attn_pre
-        if capture.get("attn_post"):
+        if capture.get("attn_post", False):
             cache["attn_post"] = attn_post
-        if capture.get("qkv"):
+        if capture.get("qkv", False):
             cache["q"] = q
             cache["k"] = k
             cache["v"] = v
-
         return out, cache
 
 
@@ -210,20 +202,21 @@ class GPTBlock(nn.Module):
     ) -> None:
         super().__init__()
         self.ln1 = nn.LayerNorm(d_model)
-        self.attn = CausalSelfAttention(
-            d_model, n_heads, max_seq_len=max_seq_len, dropout=dropout
-        )
+        self.attn = CausalSelfAttention(d_model, n_heads, max_seq_len=max_seq_len, dropout=dropout)
         self.ln2 = nn.LayerNorm(d_model)
         self.ff = FeedForward(d_model, d_ff, dropout)
 
     def forward(
         self,
         x: torch.Tensor,
+        style_emb=None,
         capture: dict[str, bool] | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         a, cache = self.attn(self.ln1(x), capture=capture)
         x = x + a
         x = x + self.ff(self.ln2(x))
+        if style_emb is not None:
+            x = x + style_emb
         return x, cache
 
 
@@ -256,21 +249,23 @@ class GPT(nn.Module):
     ) -> None:
         super().__init__()
         self.block_size = block_size
-
         self.tok_emb = nn.Embedding(vocab_size, d_model)
         self.style_emb = nn.Embedding(n_styles, d_model)
-        self.drop = nn.Dropout(dropout)
 
-        self.blocks = nn.ModuleList(
-            [
-                GPTBlock(d_model, n_heads, d_ff, max_seq_len=block_size, dropout=dropout)
-                for _ in range(n_layers)
-            ]
-        )
+        self.style_projs = nn.ModuleList([
+            nn.Linear(d_model, d_model, bias=False)
+            for _ in range(n_layers)
+        ])
+        
+        self.drop = nn.Dropout(dropout)
+        self.blocks = nn.ModuleList([
+            GPTBlock(d_model, n_heads, d_ff, max_seq_len=block_size, dropout=dropout)
+            for _ in range(n_layers)
+        ])
         self.ln_f = nn.LayerNorm(d_model)
 
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
-        self.lm_head.weight = self.tok_emb.weight  # weight tying
+        self.lm_head.weight = self.tok_emb.weight
 
         self.style_head = nn.Linear(d_model, n_styles)
 
@@ -298,16 +293,18 @@ class GPT(nn.Module):
         """
         B, T = idx.shape
         if T > self.block_size:
-            idx = idx[:, -self.block_size :]
+            idx = idx[:, -self.block_size:]
             T = idx.size(1)
 
         x = self.tok_emb(idx)
-        s = self.style_emb(style_idx).unsqueeze(1)  # (B, 1, C)
-        x = self.drop(x + s)
+
+        s = self.style_emb(style_idx).unsqueeze(1)  # (B,1,C)
+        x = self.drop(x)
 
         caches = [] if capture else None
-        for blk in self.blocks:
-            x, cache = blk(x, capture=capture)
+        for i, blk in enumerate(self.blocks):
+            s_i = self.style_projs[i](s)
+            x, cache = blk(x, style_emb=s_i, capture=capture)
             if capture:
                 caches.append(cache)
 
@@ -317,10 +314,10 @@ class GPT(nn.Module):
         if not return_style_logits:
             return logits, caches
 
-        # Posición del último token que no sea pad para la clasificación de estilo
-        last_nonpad = (idx != pad_id).long().sum(dim=1) - 1
+        last_nonpad = (idx != pad_id).long().sum(dim=1) - 1  # (B,)
         last_nonpad = last_nonpad.clamp(min=0)
-        h_last = x[torch.arange(B, device=x.device), last_nonpad, :]
-        style_logits = self.style_head(h_last)
 
+        h_last = x[torch.arange(B, device=x.device), last_nonpad, :]  # (B,C)
+
+        style_logits = self.style_head(h_last)
         return logits, caches, style_logits

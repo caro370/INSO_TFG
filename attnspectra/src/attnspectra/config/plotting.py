@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 
 # Paletas disponibles por tipo de gráfico
 _VALID_DIVERGING_CMAPS  = {"RdBu_r", "coolwarm", "bwr", "seismic", "PiYG"}
-_VALID_SEQUENTIAL_CMAPS = {"plasma", "viridis", "magma", "inferno", "cividis", "YlOrRd"}
 
 
 @dataclass

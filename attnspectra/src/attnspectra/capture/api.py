@@ -126,13 +126,6 @@ def capture_batch(
     -------
     Tupla ``(runs, metrics_list)`` con una entrada por texto.
 
-    Examples
-    --------
-    >>> ids_list = [torch.tensor([prefix + enc]) for enc in encodings]
-    >>> runs, metrics_list = capture_batch(adapter, ids_list, style_idx=0)
-    >>> # Apilar métricas para comparar (21 campos disponibles)
-    >>> stack = aspec.stack_metric(metrics_list, "A_attn_entropy")  # (N, L, H)
-    >>> stack_dist = aspec.stack_metric(metrics_list, "A_attn_distance")
     """
     if capture_cfg is None:
         capture_cfg = CaptureConfig()
@@ -211,18 +204,6 @@ def run_degradation_exp(
     -------
     Dict ``{nombre_variante: [HeadMetrics]}`` listo para
     ``plot_delta_lines_by_condition``.
-
-    Examples
-    --------
-    >>> per_cond = run_degradation_exp(
-    ...     adapter, base_ids,
-    ...     vocab_size=cfg["vocab_size"],
-    ...     prefix_len=3,
-    ...     style_idx=0,
-    ... )
-    >>> fig = aspec.plot_delta_lines_by_condition(
-    ...     per_cond, metric_key="A_attn_entropy"
-    ... )
     """
     if capture_cfg is None:
         capture_cfg = CaptureConfig()
@@ -289,13 +270,6 @@ def run_style_comparison(
     -------
     Tupla ``(metrics_a, metrics_b)`` — listas de HeadMetrics para cada estilo,
     listas para pasar a ``top_sensitive_heads`` o ``heatmap_delta``.
-
-    Examples
-    --------
-    >>> metrics_wiki, metrics_poem = run_style_comparison(
-    ...     adapter, ids_list, style_a=0, style_b=1
-    ... )
-    >>> heads = aspec.top_sensitive_heads(metrics_wiki, metrics_poem, topk=10)
     """
     if verbose:
         print(f"  Procesando estilo '{style_a_name}' ({len(ids_list)} textos)...")

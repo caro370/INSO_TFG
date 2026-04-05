@@ -27,8 +27,7 @@ def effective_rank(sv: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
     """
     exp(H(p))
 
-    Versión continua y diferenciable. Para la versión discreta basada
-    en umbral ver ``effective_rank_threshold``.
+    Versión continua y diferenciable.
 
     Parameters
     ----------
